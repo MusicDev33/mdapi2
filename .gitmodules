@@ -1,0 +1,3 @@
+[submodule "src/gentools"]
+	path = src/gentools
+	url = git@github.com:MusicDev33/gentools.git
