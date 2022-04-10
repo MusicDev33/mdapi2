@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "setup": "git submodule init && git submodule update",
+    "setup": "npm i && git submodule init && git submodule update",
     "update-sub": "git submodule update --remote src/gentools",
     "generate:schemas": "ts-node src/schema.generate.ts",
     "generate:services": "ts-node src/service.generate.ts",
