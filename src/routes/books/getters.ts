@@ -1,4 +1,4 @@
-import appointmentService from '@services/book.service';
+import bookService from '@services/book.service';
 import { Request, Response } from 'express';
 import { Book } from '@schemas/book.schema';
 
