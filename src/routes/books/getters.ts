@@ -2,10 +2,15 @@ import bookService from '@services/book.service';
 import { Request, Response } from 'express';
 import { Book } from '@schemas/book.schema';
 
+// Gives the last 30 books read by me
 export const getBooksRoute = async (req: Request, res: Response) => {
+  const books = bookService.findModelsByQuery({});
 
+  if (!books) {
+    return res.status(500).json({success: false, msg: 'Something went wrong'});
+  }
 
-  return res.status(500).json({success: false, msg: 'Could not find books.'});
+  return res.status(500).json({success: true, data: books});
 };
 
 export const searchBooksRoute = async (req: Request, res: Response) => {
