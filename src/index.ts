@@ -48,11 +48,11 @@ app.use(helmet());
 
 // Passport
 // userPassportAuth(passport);
-app.use(passport.initialize());
-app.use(passport.session());
+// app.use(passport.initialize());
+// app.use(passport.session());
 
 // Routes
-// app.use(API_BASE + 'persons', RoutesLib.PersonRoutes);
+app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
 
 app.get(API_BASE, (req: Request, res: Response) => {
   res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');
