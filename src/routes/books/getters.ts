@@ -10,7 +10,7 @@ export const getBooksRoute = async (req: Request, res: Response) => {
     return res.status(500).json({success: false, msg: 'Something went wrong'});
   }
 
-  return res.status(500).json({success: true, data: books});
+  return res.status(200).json({success: true, data: books});
 };
 
 export const searchBooksRoute = async (req: Request, res: Response) => {
