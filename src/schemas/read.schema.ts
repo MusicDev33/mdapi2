@@ -5,7 +5,7 @@ const ReadSchema: Schema = new Schema({
 	bookId: {type: String, required: true},
 	currentPage: {type: Number, required: false},
 	current: {type: Boolean, required: true},
-	finishDate: {type: Date, required: true}
+	finishDate: {type: Date, required: false}
 },{
 	minimize: false
 });
