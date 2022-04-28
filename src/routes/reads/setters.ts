@@ -1,6 +1,5 @@
 import readsService from '@services/read.service';
 import { Request, Response } from 'express';
-import { Read } from '@schemas/read.schema';
 
 export const updateOneReadRoute = async (req: Request, res: Response) => {
   const read = await readsService.findOneModelByParameter('bookId', req.params.bookId);
