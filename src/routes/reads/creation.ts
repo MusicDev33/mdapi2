@@ -5,12 +5,19 @@ import { Read } from '@schemas/read.schema';
 export const createOneReadRoute = async (req: Request, res: Response) => {
   const body = req.body;
 
+  
   if (!body.bookId || !body.currentPage) {
     return res.status(500).json({success: false, msg: 'Must supply a book ID and currentPages'});
   }
+  
+  const readExists = await readsService.findOneModelByParameter('bookId', body.bookId);
+
+  if (readExists) {
+    return res.status(500).json({success: false, msg: 'A read with that bookId already exists!'});
+  }
 
   const newRead = new Read({
-    currentPages: body.currentPages,
+    currentPage: body.currentPage,
     current: true,
     bookId: body.bookId
   });
