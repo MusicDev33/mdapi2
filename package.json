@@ -11,6 +11,7 @@
     "gen:services": "ts-node src/service.generate.ts",
     "gen:all": "npm run gen:schemas && npm run gen:services",
     "gen:routes": "ts-node src/routes.generate.ts",
+    "dev": "ts-node-dev --respawn src/index.ts",
     "start": "ts-node-dev --respawn src/index.ts"
   },
   "author": "",
