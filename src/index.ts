@@ -1,9 +1,10 @@
 // tslint:disable-next-line
 require('tsconfig-paths/register');
 import dotenv from 'dotenv';
+
 import mongoose from 'mongoose';
 
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
@@ -61,7 +62,7 @@ app.get(API_BASE, (req: Request, res: Response) => {
 
 // Server
 app.listen(PORT, () => {
-  console.log('\nKBL started in mode \'' + process.env.NODE_ENV + '\'');
+  console.log('\nServer started in mode \'' + process.env.NODE_ENV + '\'');
   console.log('TLS/HTTPS is off.');
   console.log('Port: ' + PORT);
   console.log(`Reachable at ${API_BASE}`);
