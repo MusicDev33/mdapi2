@@ -55,6 +55,7 @@ app.use(helmet());
 // Routes
 app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
 app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
+app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
 
 app.get(API_BASE, (req: Request, res: Response) => {
   res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');

@@ -2,7 +2,7 @@ import mongoose, { Schema, Model } from 'mongoose';
 import { ISynopsis } from '@models/synopsis.model';
 
 const SynopsisSchema: Schema = new Schema({
-	bookId: {type: String, required: true},
+	bookId: {type: String, required: true, unique: true},
 	writeUpLink: {type: String, required: false},
 	description: {type: String, required: true}
 },{
