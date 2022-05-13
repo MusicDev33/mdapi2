@@ -19,6 +19,7 @@ export class ModelService<P extends Document> {
     }
   }
 
+  // TODO: Make this actually useful
   public async saveChangedModel(changedModel: P, changedParam: string): Promise<string> {
     changedModel.markModified(changedParam);
 
@@ -32,6 +33,37 @@ export class ModelService<P extends Document> {
       console.log(err);
       return 'Error - Insert error code here';
     }
+  }
+
+  // EXPERIMENTAL
+  // TODO: Decide on whether I'm keeping this
+  public async changeObject(id: string, attribute: string, newValue: any): Promise<P | null> {
+    const object = await this.findOneModelByQuery({_id: id});
+
+    if (!object) {
+      return null;
+    }
+
+    // I really don't like this approach because in MongoDB, you can easily change schemas and if an object hasn't been
+    // updated, then this will fail. Maybe I'll just have to be extra cautious about upgrade scripts...
+    if (!(attribute in object)) {
+      return null;
+    }
+
+    // Rolling with this, but wow it feels icky...
+    if (typeof (object as { [key: string]: any })[attribute] === typeof newValue) {
+      (object as { [key: string]: any })[attribute] = newValue;
+
+      const savedObject = await this.saveChangedModel(object, attribute);
+
+      if (!savedObject) {
+        return null;
+      }
+
+      return object;
+    }
+
+    return null
   }
 
   public async findOneModelByParameter(param: string, paramValue: any): Promise<P | null> {
@@ -88,13 +120,13 @@ export class ModelService<P extends Document> {
     }
   }
 
-  public async deleteAll(): Promise<any | null> {
+  public async deleteAll(): Promise<boolean> {
     try {
       const deletedAllModels = await this.HelperClass.deleteMany({}).exec();
-      return deletedAllModels;
+      return deletedAllModels ? true : false;
     } catch (err) {
       console.log(err);
-      return null;
+      return false;
     }
   }
 }
