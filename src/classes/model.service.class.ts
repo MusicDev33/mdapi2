@@ -40,13 +40,9 @@ export class ModelService<P extends Document> {
   public async changeObject(id: string, attribute: string, newValue: any): Promise<P | null> {
     const object = await this.findOneModelByQuery({_id: id});
 
-    if (!object) {
-      return null;
-    }
-
     // I really don't like this approach because in MongoDB, you can easily change schemas and if an object hasn't been
     // updated, then this will fail. Maybe I'll just have to be extra cautious about upgrade scripts...
-    if (!(attribute in object)) {
+    if (!object || attribute === '_id' || !(attribute in object)) {
       return null;
     }
 
