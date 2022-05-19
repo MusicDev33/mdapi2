@@ -10,8 +10,8 @@ const dotenvCheck = (property: string | undefined): string => {
 }
 
 export const PORT = dotenvCheck(process.env.PORT);
+export const AUTH_TOKEN = dotenvCheck(process.env.AUTH_TOKEN);
 export const API_BASE = dotenvCheck(process.env.API_BASE);
-export const DB_SECRET = dotenvCheck(process.env.DB_SECRET);
 export const DB_NAME = dotenvCheck(process.env.DB_NAME);
 
 export const ACCEPTED_AGENTS = ['MDAPIWebv1'];
