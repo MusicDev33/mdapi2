@@ -7,14 +7,12 @@ import mongoose from 'mongoose';
 import { Request, Response } from 'express';
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import passport from 'passport';
 import helmet from 'helmet';
 import cors from 'cors';
 
 dotenv.config();
 require('dotenv-defaults/config');
 
-// import { userPassportAuth } from '@config/passport';
 import { API_BASE } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 
@@ -38,19 +36,12 @@ mongoose.connection.on('error', (err: any) => {
 });
 
 // CORS
-
-
 const app = express();
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
-
-// Passport
-// userPassportAuth(passport);
-// app.use(passport.initialize());
-// app.use(passport.session());
 
 // Routes
 app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
