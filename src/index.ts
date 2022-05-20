@@ -22,6 +22,12 @@ if (process.env.AUTH_TOKEN === 'lmao') {
   process.exit(1);
 }
 
+if (process.env.USER_PASS === 'testpass') {
+  console.log('Change password.');
+
+  process.exit(1);
+}
+
 const PORT = process.env.PORT;
 const db = `mongodb://localhost:27017/${process.env.DB_NAME}`;
 
@@ -47,6 +53,7 @@ app.use(helmet());
 app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
 app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
 app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
+app.use(API_BASE + 'auth', RoutesLib.AuthRoutes);
 
 app.get(API_BASE, (req: Request, res: Response) => {
   res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');
