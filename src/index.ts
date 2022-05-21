@@ -36,6 +36,13 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Loaded here so helmet's security policy doesn't block the image.
+app.get(API_BASE, (_: Request, res: Response) => {
+  const imgUrl = 'https://www.pngfind.com/pngs/m/569-5691407_can-of-beans-monday-bushs-baked-beans-hd.png';
+  res.status(404).send(`<img src="${imgUrl}" />`);
+});
+
 app.use(helmet());
 
 // Routes
@@ -43,10 +50,6 @@ app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
 app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
 app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
 app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
-
-app.get(API_BASE, (_: Request, res: Response) => {
-  res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');
-});
 
 // Server
 app.listen(PORT, () => {
