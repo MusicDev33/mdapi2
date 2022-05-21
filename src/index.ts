@@ -15,6 +15,7 @@ require('dotenv-defaults/config');
 
 import { API_BASE } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
+import * as limits from '@config/rate-limit';
 
 const PORT = process.env.PORT;
 const db = `mongodb://localhost:27017/${process.env.DB_NAME}`;
@@ -41,7 +42,7 @@ app.use(helmet());
 app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
 app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
 app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
-app.use(API_BASE + 'auth', RoutesLib.AuthRoutes);
+app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
 
 app.get(API_BASE, (req: Request, res: Response) => {
   res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');
