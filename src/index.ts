@@ -16,18 +16,6 @@ require('dotenv-defaults/config');
 import { API_BASE } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 
-
-if (process.env.AUTH_TOKEN === 'lmao') {
-  console.log('Change auth token.');
-  process.exit(1);
-}
-
-if (process.env.USER_PASS === 'testpass') {
-  console.log('Change password.');
-
-  process.exit(1);
-}
-
 const PORT = process.env.PORT;
 const db = `mongodb://localhost:27017/${process.env.DB_NAME}`;
 
