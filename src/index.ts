@@ -44,7 +44,7 @@ app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
 app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
 app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
 
-app.get(API_BASE, (req: Request, res: Response) => {
+app.get(API_BASE, (_: Request, res: Response) => {
   res.status(404).send('<h1 style="color: blue; text-align: center;">404 Error</h1>');
 });
 
