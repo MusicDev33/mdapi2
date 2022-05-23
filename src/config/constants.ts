@@ -3,7 +3,7 @@ dotenv.config();
 
 const dotenvCheck = (property: string | undefined): string => {
   if (!property) {
-    throw 'dotenv check failed.'
+    throw new Error(`dotenv check failed on property`);
   }
 
   return property;
