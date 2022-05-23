@@ -16,6 +16,7 @@ require('dotenv-defaults/config');
 import { API_BASE } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 import * as limits from '@config/rate-limit';
+import { generalAuth } from '@middleware/auth';
 
 const PORT = process.env.PORT;
 const db = `mongodb://localhost:27017/${process.env.DB_NAME}`;
@@ -46,9 +47,9 @@ app.get(API_BASE, (_: Request, res: Response) => {
 app.use(helmet());
 
 // Routes
-app.use(API_BASE + 'books', RoutesLib.BooksRoutes);
-app.use(API_BASE + 'reads', RoutesLib.ReadsRoutes);
-app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
+app.use(API_BASE + 'books', [generalAuth], RoutesLib.BooksRoutes);
+app.use(API_BASE + 'reads', [generalAuth], RoutesLib.ReadsRoutes);
+app.use(API_BASE + 'synopses', [generalAuth], RoutesLib.SynopsisRoutes);
 app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
 
 // Server

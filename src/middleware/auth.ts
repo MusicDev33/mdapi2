@@ -2,7 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { ACCEPTED_AGENTS, AUTH_TOKEN } from '@config/constants';
 
 export const generalAuth = (req: Request, res: Response, next: NextFunction) => {
-  const authToken = req.header('MDAuthToken');
+  if (!req.query.token) {
+    return res.status(401).json({success: false});
+  }
+
+  const authToken = req.query.token;
 
   if (!authToken || authToken !== AUTH_TOKEN) {
     return res.status(401).json({success: false});
