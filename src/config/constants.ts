@@ -14,6 +14,7 @@ export const AUTH_TOKEN = dotenvCheck(process.env.AUTH_TOKEN);
 export const API_BASE = dotenvCheck(process.env.API_BASE);
 export const DB_NAME = dotenvCheck(process.env.DB_NAME);
 export const USER_PASS = dotenvCheck(process.env.USER_PASS);
+export const WHITELIST_CORS = dotenvCheck(process.env.WHITELIST_CORS).split(',');
 
 export const ACCEPTED_AGENTS = ['MDAPIWebv1', 'MDReads'];
 

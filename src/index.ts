@@ -13,7 +13,7 @@ import cors from 'cors';
 dotenv.config();
 require('dotenv-defaults/config');
 
-import { API_BASE } from '@config/constants';
+import { API_BASE, WHITELIST_CORS } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 import * as limits from '@config/rate-limit';
 import { generalAuth } from '@middleware/auth';
@@ -31,9 +31,22 @@ mongoose.connection.on('error', (err: any) => {
   console.log('Database Error: ' + err);
 });
 
-// CORS
 const app = express();
-app.use(cors());
+
+// CORS
+const corsDelegate = (req: any, cb: any) => {
+  console.log(req.header('Origin'));
+
+  let corsOptions;
+
+  corsOptions = { origin: true };
+
+  cb(null, corsOptions);
+}
+
+app.use(cors(corsDelegate));
+
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
