@@ -44,6 +44,7 @@ const corsDelegate = (req: any, cb: any) => {
   cb(null, corsOptions);
 }
 
+app.options('*', cors(corsDelegate));
 app.use(cors(corsDelegate));
 
 
