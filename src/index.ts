@@ -35,8 +35,6 @@ const app = express();
 
 // CORS
 const corsDelegate = (req: any, cb: any) => {
-  console.log(req.header('Origin'));
-
   let corsOptions;
 
   corsOptions = { origin: true };
