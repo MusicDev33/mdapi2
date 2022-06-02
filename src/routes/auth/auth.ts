@@ -33,7 +33,7 @@ export const getAuthTokenRoute = (req: Request, res: Response) => {
 // Rhythm Validation
 const rhythmPass = RHY_PASS.split(',') // test password
 
-const tolerance = 0.2;
+const tolerance = 0.3;
 const bpm = 120;
 const oneMin = 60000; // milliseconds in a minute
 const approvedRhythyms = [8, 12, 16];
