@@ -33,7 +33,9 @@ export const getAuthTokenRoute = (req: Request, res: Response) => {
 // Rhythm Validation
 const rhythmPass = RHY_PASS.split(',') // test password
 
-const tolerance = 0.3;
+// The tolerance is very high, but getting time is just
+// not accurate at all on mobile...
+const tolerance = 0.4;
 const bpm = 120;
 const oneMin = 60000; // milliseconds in a minute
 const approvedRhythyms = [8, 12, 16];
