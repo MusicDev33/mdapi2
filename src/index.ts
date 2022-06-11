@@ -13,7 +13,7 @@ import cors from 'cors';
 dotenv.config();
 require('dotenv-defaults/config');
 
-import { API_BASE, WHITELIST_CORS } from '@config/constants';
+import { API_BASE } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 import * as limits from '@config/rate-limit';
 import { generalAuth } from '@middleware/auth';
@@ -61,7 +61,7 @@ app.use(helmet());
 // Routes
 app.use(API_BASE + 'books', [generalAuth], RoutesLib.BooksRoutes);
 app.use(API_BASE + 'reads', [generalAuth], RoutesLib.ReadsRoutes);
-app.use(API_BASE + 'synopses', [generalAuth], RoutesLib.SynopsisRoutes);
+app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
 app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
 
 // Server
