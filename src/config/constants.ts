@@ -16,12 +16,18 @@ export const DB_NAME = dotenvCheck(process.env.DB_NAME);
 export const USER_PASS = dotenvCheck(process.env.USER_PASS);
 export const RHY_PASS = dotenvCheck(process.env.RHY_PASS);
 export const WHITELIST_CORS = dotenvCheck(process.env.WHITELIST_CORS).split(',');
+export const OPEN_AI_API_KEY = dotenvCheck(process.env.OPEN_AI_API_KEY);
 
 export const ACCEPTED_AGENTS = ['MDAPIWebv1', 'MDReads'];
 
 // Make sure dangerous defaults crash the program.
 if (AUTH_TOKEN === 'lmao') {
   console.log('Change auth token.');
+  process.exit(1);
+}
+
+if (OPEN_AI_API_KEY === 'lmao') {
+  console.log('Change OpenAI API key.');
   process.exit(1);
 }
 
