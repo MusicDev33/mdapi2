@@ -19,7 +19,7 @@ import * as limits from '@config/rate-limit';
 import { generalAuth } from '@middleware/auth';
 
 const PORT = process.env.PORT;
-const db = `mongodb://localhost:27017/${process.env.DB_NAME}`;
+const db = `mongodb://127.0.0.1:27017/${process.env.DB_NAME}`;
 
 mongoose.connect(db);
 
