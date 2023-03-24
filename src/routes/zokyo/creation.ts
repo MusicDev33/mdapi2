@@ -14,10 +14,12 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     }
   }
 
-  let messages = [
-    {'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more.'},
-    {'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!'}
-  ]
+  let messages = [];
+
+  if (req.body.mode == 'code') {
+    messages.push({'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more.'});
+    messages.push({'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!'});
+  }
 
   messages.push({
     role: 'user',
