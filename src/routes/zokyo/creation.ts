@@ -4,7 +4,8 @@ import { OPEN_AI_API_KEY } from '@config/constants';
 import axios from 'axios';
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
-  console.log(req.body.msg)
+  let temperature = 1;
+  let top_p = 1;
 
   const url ='https://api.openai.com/v1/chat/completions';
   const reqConfig = {
@@ -17,19 +18,25 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   let messages = [];
 
   if (req.body.mode == 'code') {
-    messages.push({'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more.'});
+    temperature = 0.3;
+
+    messages.push({'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.'});
     messages.push({'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!'});
   }
 
-  messages.push({
-    role: 'user',
-    content: req.body.msg
-  });
+  messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
+  messages = messages.concat(req.body.chats);
+
+  console.log('Chats');
 
   const data = {
     model: 'gpt-3.5-turbo',
-    messages
+    messages,
+    temperature,
+    top_p
   }
+
+  console.log(data);
 
   try {
     // TODO: Get rid of this garbage. any should be banned, but it's currently 12:23 AM and I have to wake up early tomorrow
@@ -46,3 +53,37 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
   }
 };
+
+// Written by ChatGPT!
+const getDate = (): string => {
+  const date: Date = new Date();
+
+  const months: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const month: string = months[date.getMonth()];
+
+  const suffixes: string[] = ['st', 'nd', 'rd', 'th'];
+  let day: number = date.getDate();
+  let suffix: string;
+  if (day < 4 || day > 20) {
+    suffix = suffixes[day % 10 - 1] || suffixes[3];
+  } else {
+    suffix = suffixes[3];
+  }
+  const dayString: string = `${day}${suffix}`;
+
+  const year: number = date.getFullYear();
+
+  let hours: number = date.getHours();
+  const ampm: string = hours >= 12 ? 'PM' : 'AM';
+  hours %= 12;
+  hours = hours || 12;
+  const minutes: number = date.getMinutes();
+
+  const dateString: string = `${month} ${dayString}, ${year}, ${hours}:${minutes} ${ampm}`;
+
+  const utcString: string = date.toUTCString();
+
+  return `${dateString} (${utcString})`;
+};
+
+
