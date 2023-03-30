@@ -1,7 +1,12 @@
 import { Request, Response } from 'express';
+
+import bookService from '@services/book.service';
+import { Book } from '@schemas/book.schema';
+import { IBook } from '@models/book.model';
+
 import { OPEN_AI_API_KEY } from '@config/constants';
 
-import { get_encoding, encoding_for_model } from '@dqbd/tiktoken';
+import { encoding_for_model } from '@dqbd/tiktoken';
 
 import axios from 'axios';
 
