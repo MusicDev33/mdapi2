@@ -1,8 +1,12 @@
 import { Request, Response } from 'express';
 
-import bookService from '@services/book.service';
-import { Book } from '@schemas/book.schema';
-import { IBook } from '@models/book.model';
+import chatService from '@services/chat.service';
+import { Chat } from '@schemas/chat.schema';
+import { IChat } from '@models/chat.model';
+
+import conversationService from '@services/conversation.service';
+import { Conversation } from '@schemas/conversation.schema';
+import { IConversation } from '@models/conversation.model';
 
 import { OPEN_AI_API_KEY } from '@config/constants';
 
