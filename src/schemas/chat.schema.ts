@@ -5,7 +5,7 @@ const ChatSchema: Schema = new Schema({
 	conversationId: {type: String, required: true},
 	role: {type: String, required: true},
 	content: {type: String, required: true},
-	timstamp: {type: Number, required: true}
+	timestamp: {type: Number, required: true}
 },{
 	minimize: false
 });

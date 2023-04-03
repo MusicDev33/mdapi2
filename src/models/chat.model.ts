@@ -18,5 +18,5 @@ export interface IChat extends Document {
   conversationId: string;
   role: string;
   content: string;
-  timstamp: number;
+  timestamp: number;
 }

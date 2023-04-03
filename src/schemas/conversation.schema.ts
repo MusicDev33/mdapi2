@@ -2,7 +2,8 @@ import mongoose, { Schema, Model } from 'mongoose';
 import { IConversation } from '@models/conversation.model';
 
 const ConversationSchema: Schema = new Schema({
-	user: {type: String, required: true}
+	user: {type: String, required: true},
+	name: {type: String, required: true}
 },{
 	minimize: false
 });

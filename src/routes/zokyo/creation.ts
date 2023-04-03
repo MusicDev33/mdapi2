@@ -18,10 +18,29 @@ const TOKEN_THRESHOLD = 4096;
 const encoder = encoding_for_model('gpt-3.5-turbo-0301');
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
+  let user = req.body.user;
+  let convId: string = req.body.convId;
+
+  if (convId == '') {
+    const convName = `Conversation ${new Date().getTime()}`;
+    const newConv = new Conversation({
+      user: user,
+      name: convName
+    });
+
+    let conv = await conversationService.saveModel(newConv);
+    if (!conv) {
+      return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
+    }
+    
+    convId = '' + conv.id;
+  }
+
   let temperature = 1;
   let top_p = 1;
 
   const userChats = req.body.chats;
+  const newMsg: string = req.body.msg;
 
   const url ='https://api.openai.com/v1/chat/completions';
   const reqConfig = {
@@ -41,8 +60,9 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   }
 
   messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
-  messages = messages.concat(userChats);
+  messages.push({role: 'user', content: newMsg});
 
+  // Make sure I'm not going over the max token limit.
   while (!tokenCountValid(messages)) {
     userChats.shift();
 
@@ -56,7 +76,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     }
 
     messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
-    messages = messages.concat(userChats);
+    messages.push({role: 'user', content: newMsg});
   }
 
   console.log('Chats');
@@ -68,18 +88,28 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     top_p
   }
 
-  console.log(data);
-
   try {
     // TODO: Get rid of this garbage. any should be banned, but it's currently 12:23 AM and I have to wake up early tomorrow
     const openAiRes = await axios.post(url, data, reqConfig);
     let resData = openAiRes.data;
     resData['success'] = true;
 
+    console.log(openAiRes.data);
+
+    const responseData = {
+      success: true,
+      msg: 'Successfully received response.',
+      newChat: {
+        conversationId: convId,
+        role: 'assistant',
+        content: openAiRes.data.choices[0].message.content,
+        timestamp: Date.now()
+      }
+    }
 
     console.log(resData);
 
-    return res.status(200).json(resData);
+    return res.status(200).json(responseData);
   } catch (err) {
     console.log(err);
     return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
