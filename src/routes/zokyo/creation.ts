@@ -1,4 +1,7 @@
+import axios from 'axios';
 import { Request, Response } from 'express';
+
+import { encoding_for_model } from '@dqbd/tiktoken';
 
 import chatService from '@services/chat.service';
 import { Chat } from '@schemas/chat.schema';
@@ -10,9 +13,7 @@ import { IConversation } from '@models/conversation.model';
 
 import { OPEN_AI_API_KEY } from '@config/constants';
 
-import { encoding_for_model } from '@dqbd/tiktoken';
-
-import axios from 'axios';
+import { generateName } from './naming';
 
 const TOKEN_THRESHOLD = 4096;
 const encoder = encoding_for_model('gpt-3.5-turbo-0301');
@@ -22,7 +23,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   let convId: string = req.body.convId;
 
   if (convId == '') {
-    const convName = `Conversation ${new Date().getTime()}`;
+    const convName = generateName();
     const newConv = new Conversation({
       user: user,
       name: convName
@@ -48,6 +49,13 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${OPEN_AI_API_KEY}`
     }
+  }
+
+  const userChat = {
+    conversationId: convId,
+    role: 'user',
+    content: newMsg,
+    timestamp: Date.now()
   }
 
   let messages = [];
@@ -91,23 +99,27 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   try {
     // TODO: Get rid of this garbage. any should be banned, but it's currently 12:23 AM and I have to wake up early tomorrow
     const openAiRes = await axios.post(url, data, reqConfig);
-    let resData = openAiRes.data;
-    resData['success'] = true;
-
-    console.log(openAiRes.data);
+    const assistantChat = {
+      conversationId: convId,
+      role: 'assistant',
+      content: openAiRes.data.choices[0].message.content,
+      timestamp: Date.now()
+    }
 
     const responseData = {
       success: true,
       msg: 'Successfully received response.',
-      newChat: {
-        conversationId: convId,
-        role: 'assistant',
-        content: openAiRes.data.choices[0].message.content,
-        timestamp: Date.now()
-      }
+      newChat: assistantChat
     }
 
-    console.log(resData);
+    const savedAssistantChat = await chatService.saveModel(new Chat(assistantChat));
+    const savedUserChat = await chatService.saveModel(new Chat(userChat));
+
+    if (!savedAssistantChat || !savedUserChat) {
+      console.log('SAVE ERROR:');
+      console.log(savedAssistantChat);
+      console.log(savedUserChat);
+    }
 
     return res.status(200).json(responseData);
   } catch (err) {
