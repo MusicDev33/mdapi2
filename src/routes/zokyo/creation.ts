@@ -5,11 +5,9 @@ import { encoding_for_model } from '@dqbd/tiktoken';
 
 import chatService from '@services/chat.service';
 import { Chat } from '@schemas/chat.schema';
-import { IChat } from '@models/chat.model';
 
 import conversationService from '@services/conversation.service';
 import { Conversation } from '@schemas/conversation.schema';
-import { IConversation } from '@models/conversation.model';
 
 import { OPEN_AI_API_KEY } from '@config/constants';
 
@@ -61,6 +59,17 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   }
 
   let messages = [];
+  let allPrevChatsData = await chatService.findModelsByParameter('conversationId', convId, {timestamp: 1});
+  if (!allPrevChatsData) {
+    return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
+  }
+
+  let allPrevChats = allPrevChatsData?.map((chat) => {
+    return {
+      role: chat.role,
+      content: chat.content
+    }
+  })
 
   if (req.body.mode == 'code') {
     temperature = 0.3;
@@ -70,6 +79,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   }
 
   messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
+  messages = messages.concat(allPrevChats);
   messages.push({role: 'user', content: newMsg});
 
   // Make sure I'm not going over the max token limit.
@@ -86,10 +96,9 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     }
 
     messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
+    messages = messages.concat(allPrevChats);
     messages.push({role: 'user', content: newMsg});
   }
-
-  console.log('Chats');
 
   const data = {
     model: 'gpt-3.5-turbo',
