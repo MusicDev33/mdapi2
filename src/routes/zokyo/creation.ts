@@ -22,6 +22,8 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   let user = req.body.user;
   let convId: string = req.body.convId;
 
+  let conv = null;
+
   if (convId == '') {
     const convName = generateName();
     const newConv = new Conversation({
@@ -29,7 +31,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
       name: convName
     });
 
-    let conv = await conversationService.saveModel(newConv);
+    conv = await conversationService.saveModel(newConv);
     if (!conv) {
       return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
     }
@@ -106,10 +108,14 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
       timestamp: Date.now()
     }
 
-    const responseData = {
+    const responseData: any = {
       success: true,
       msg: 'Successfully received response.',
       newChat: assistantChat
+    }
+
+    if (conv) {
+      responseData['newConversation'] = conv;
     }
 
     const savedAssistantChat = await chatService.saveModel(new Chat(assistantChat));

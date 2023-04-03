@@ -107,7 +107,7 @@ const nouns = [
 
 export const generateName = () => {
   const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-  const noun = adjectives[Math.floor(Math.random() * nouns.length)];
+  const noun = nouns[Math.floor(Math.random() * nouns.length)];
 
   return `${adj.charAt(0).toUpperCase() + adj.slice(1)} ${noun.charAt(0).toUpperCase() + noun.slice(1)}`;
 }
