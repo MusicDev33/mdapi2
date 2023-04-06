@@ -84,7 +84,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
 
   // Make sure I'm not going over the max token limit.
   while (!tokenCountValid(messages)) {
-    userChats.shift();
+    allPrevChats.shift();
 
     messages = [];
 

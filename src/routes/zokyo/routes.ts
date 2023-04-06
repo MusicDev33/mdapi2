@@ -6,4 +6,7 @@ router.post('/code', Routes.createNewChatRoute);
 router.get('/convs/:username', Routes.getConversationsRoute);
 router.get('/msgs/:convId', Routes.getChatsByConvIdRoute);
 
+router.post('/auth', Routes.authRoute);
+router.post('/login/create', Routes.createLoginRoute);
+
 export default router;
