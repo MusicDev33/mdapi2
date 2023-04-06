@@ -4,7 +4,7 @@ import conversationService from "@services/conversation.service";
 import chatService from "@services/chat.service";
 
 export const getConversationsRoute = async (req: Request, res: Response) => {
-  const convs = await conversationService.findModelsByParameter('user', req.params.username);
+  const convs = await conversationService.findModelsByParameter('user', req.params.username, {_id: 1}, 500);
   console.log(convs)
 
   if (!convs) {
@@ -15,7 +15,7 @@ export const getConversationsRoute = async (req: Request, res: Response) => {
 };
 
 export const getChatsByConvIdRoute = async (req: Request, res: Response) => {
-  const chats = await chatService.findModelsByParameter('conversationId', req.params.convId, {timestamp: 1});
+  const chats = await chatService.findModelsByParameter('conversationId', req.params.convId, {timestamp: 1}, 500);
   if (!chats) {
     return res.status(500).json({success: false, msg: 'Something went wrong'});
   }

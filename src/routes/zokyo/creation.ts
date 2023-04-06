@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
-
-import { encoding_for_model } from '@dqbd/tiktoken';
+import { encode } from 'gpt-3-encoder';
 
 import chatService from '@services/chat.service';
 import { Chat } from '@schemas/chat.schema';
@@ -14,7 +13,6 @@ import { OPEN_AI_API_KEY } from '@config/constants';
 import { generateName } from './naming';
 
 const TOKEN_THRESHOLD = 4096;
-const encoder = encoding_for_model('gpt-3.5-turbo-0301');
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
   let user = req.body.user;
@@ -40,7 +38,6 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   let temperature = 1;
   let top_p = 1;
 
-  const userChats = req.body.chats;
   const newMsg: string = req.body.msg;
 
   const url ='https://api.openai.com/v1/chat/completions';
@@ -85,6 +82,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   // Make sure I'm not going over the max token limit.
   while (!tokenCountValid(messages)) {
     allPrevChats.shift();
+    console.log(allPrevChats);
 
     messages = [];
 
@@ -147,8 +145,10 @@ const tokenCountValid = (messages: any[]) => {
   let total = 0;
 
   for (let message of messages) {
-    total += encoder.encode(message.content).length;
+    total += encode(message.content).length;
   }
+
+  console.log(total);
 
   if (total > TOKEN_THRESHOLD) {
     return false;
