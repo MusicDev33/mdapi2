@@ -1,9 +1,12 @@
 import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
+
 import { WHITELIST_USERS } from '@config/constants';
 
 import zUserService from '@services/zuser.service';
 import { ZUser } from '@schemas/zuser.schema';
+
+import { getPassMsg, getUserNotFoundMsg } from './assets';
 
 export const authRoute = async (req: Request, res: Response) => {
   const username = req.body.username;
@@ -11,12 +14,13 @@ export const authRoute = async (req: Request, res: Response) => {
 
   const user = await zUserService.findOneModelByQuery({username});
   if (!user) {
-    return res.status(401).json({success: false});
+    return res.status(200).json({success: false, msg: getUserNotFoundMsg()});
   }
 
   const passwordsMatch = await bcrypt.compare(password, user.password);
   if (!passwordsMatch) {
-    return res.status(401).json({success: false, msg: 'Wrong password.'});
+    // Should be 401 but Axios defaults to throwing errors instead of letting me handle them
+    return res.status(200).json({success: false, msg: getPassMsg()});
   }
 
   // Don't really want to send the entire user object with the password, now do we?
