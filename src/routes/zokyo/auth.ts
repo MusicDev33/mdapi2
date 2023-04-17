@@ -1,5 +1,6 @@
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
-import { USER_PASS } from '@config/constants';
+import { WHITELIST_USERS } from '@config/constants';
 
 import zUserService from '@services/zuser.service';
 import { ZUser } from '@schemas/zuser.schema';
@@ -8,30 +9,63 @@ export const authRoute = async (req: Request, res: Response) => {
   const username = req.body.username;
   const password = req.body.password;
 
-  const user = await zUserService.findOneModelByQuery({username, password});
+  const user = await zUserService.findOneModelByQuery({username});
   if (!user) {
     return res.status(401).json({success: false});
   }
 
-  return res.status(200).json({success: true, data: user});
+  const passwordsMatch = await bcrypt.compare(password, user.password);
+  if (!passwordsMatch) {
+    return res.status(401).json({success: false, msg: 'Wrong password.'});
+  }
+
+  // Don't really want to send the entire user object with the password, now do we?
+  const userData = {
+    username: user.username,
+    _id: user._id
+  }
+
+  return res.status(200).json({success: true, data: userData});
 }
 
 export const createLoginRoute = async (req: Request, res: Response) => {
-  if (req.body.authPass !== USER_PASS) {
-    return res.status(401).json({success: false});
-  }
-
   const username = req.body.username;
   const password = req.body.password;
-
+  
   if (!username || !password) {
     return res.status(400).json({success: false});
   }
 
-  const savedZUser = await zUserService.saveModel(new ZUser({username, password}));
+  if (!WHITELIST_USERS.includes(username)) {
+    return res.status(401).json({success: false});
+  }
+  
+  const hashedPassword = await bcrypt.hash(req.body.password, 12);
+  
+  const savedZUser = await zUserService.saveModel(new ZUser({username, password: hashedPassword}));
   if (!savedZUser) {
     return res.status(500).json({success: false});
   }
 
-  return res.status(200).json({success: true, data: savedZUser});
+  const userData = {
+    username: savedZUser.username,
+    _id: savedZUser._id
+  }
+
+  return res.status(200).json({success: true, data: userData});
+}
+
+export const checkWhitelistUserRoute = async (req: Request, res: Response) => {
+  const username = req.params.username;
+
+  const user = await zUserService.findOneModelByParameter('username', username);
+  if (user) {
+    return res.status(200).json({success: false});
+  }
+
+  if (WHITELIST_USERS.includes(username)) {
+    return res.status(200).json({success: true});
+  }
+
+  return res.status(200).json({success: false});
 }

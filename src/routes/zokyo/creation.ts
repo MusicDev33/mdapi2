@@ -16,6 +16,10 @@ const TOKEN_THRESHOLD = 4096;
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
   let user = req.body.user;
+  if (!user) {
+    return res.status(400).json({success: false});
+  }
+
   let convId: string = req.body.convId;
 
   let conv = null;

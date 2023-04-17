@@ -17,6 +17,7 @@ export const USER_PASS = dotenvCheck(process.env.USER_PASS);
 export const RHY_PASS = dotenvCheck(process.env.RHY_PASS);
 export const WHITELIST_CORS = dotenvCheck(process.env.WHITELIST_CORS).split(',');
 export const OPEN_AI_API_KEY = dotenvCheck(process.env.OPEN_AI_API_KEY);
+export let WHITELIST_USERS = dotenvCheck(process.env.WHITELIST_USERS).split(',');
 
 export const ACCEPTED_AGENTS = ['MDAPIWebv1', 'MDReads'];
 
@@ -41,4 +42,8 @@ if (RHY_PASS === '???') {
   console.log('Change rhy password.');
 
   process.exit(1);
+}
+
+if (WHITELIST_USERS.includes('test1')) {
+  WHITELIST_USERS = [];
 }
