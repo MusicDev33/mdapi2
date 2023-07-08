@@ -2,13 +2,13 @@ import axios from 'axios';
 import { Request, Response } from 'express';
 import { encode } from 'gpt-3-encoder';
 
-import chatService from '@services/chat.service';
-import { Chat } from '@schemas/chat.schema';
-
-import conversationService from '@services/conversation.service';
-import { Conversation } from '@schemas/conversation.schema';
-
 import { OPEN_AI_API_KEY } from '@config/constants';
+
+import chatService from '@services/chat.service';
+import conversationService from '@services/conversation.service';
+
+import { Chat } from '@schemas/chat.schema';
+import { Conversation } from '@schemas/conversation.schema';
 
 import { generateName } from './naming';
 

@@ -116,6 +116,16 @@ export class ModelService<P extends Document> {
     }
   }
 
+  public async deleteModelsByQuery(query: any): Promise<boolean> {
+    try {
+      const deletedModels = await this.HelperClass.deleteMany(query).exec();
+      return deletedModels ? true : false;
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+  }
+
   public async deleteAll(): Promise<boolean> {
     try {
       const deletedAllModels = await this.HelperClass.deleteMany({}).exec();
