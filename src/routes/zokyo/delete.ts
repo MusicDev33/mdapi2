@@ -6,7 +6,7 @@ import chatService from "@services/chat.service";
 export const deleteConversationByIdRoute = async (req: Request, res: Response) => {
   console.log(`Deleting conversation: ${req.params.convId}`);
 
-  const deletedChats = await chatService.deleteModelsByQuery({convId: req.params.convId});
+  const deletedChats = await chatService.deleteModelsByQuery({conversationId: req.params.convId});
 
   if (!deletedChats) {
     console.log('Something went wrong with deleting chats!');
