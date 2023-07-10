@@ -64,6 +64,7 @@ app.use(API_BASE + 'reads', [generalAuth], RoutesLib.ReadsRoutes);
 app.use(API_BASE + 'synopses', RoutesLib.SynopsisRoutes);
 app.use(API_BASE + 'auth', RoutesLib.AuthRoutes, limits.authLimit);
 app.use(API_BASE + 'zokyo', RoutesLib.ZokyoRoutes);
+app.use(API_BASE + 'xenon', RoutesLib.XenonRoutes);
 
 // Server
 app.listen(PORT, () => {
