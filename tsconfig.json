@@ -27,7 +27,8 @@
       "@logger/*": ["logger/*"],
       "@classes/*": ["classes/*"],
       "@gentools/*": ["gentools/*"],
-      "@schemas/*": ["schemas/*"]
+      "@schemas/*": ["schemas/*"],
+      "@db/*": ["db/*"]
     },
   },
   "include": [

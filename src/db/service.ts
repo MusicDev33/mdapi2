@@ -1,6 +1,10 @@
 import { Document, Model } from 'mongoose';
 
-export class ModelService<P extends Document> {
+export class ModelService {
+  
+}
+
+export class OldModelService<P extends Document> {
   private HelperClass: Model<P>;
   protected bannedParams: string[] = [];
 
