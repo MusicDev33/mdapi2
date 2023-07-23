@@ -28,7 +28,8 @@
       "@classes/*": ["classes/*"],
       "@gentools/*": ["gentools/*"],
       "@schemas/*": ["schemas/*"],
-      "@db/*": ["db/*"]
+      "@db/*": ["db/*"],
+      "@cli/*": ["cli/*"],
     },
   },
   "include": [
