@@ -7,6 +7,7 @@ const XSectionSchema: Schema = new Schema({
 	sectionId: {type: String, required: true},
 	sectionName: {type: String, required: true},
 	content: {type: String, required: true},
+	sequence: {type: Number, required: true},
 },{
 	minimize: false
 });

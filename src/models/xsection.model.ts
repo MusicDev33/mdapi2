@@ -7,4 +7,5 @@ export interface IXSection extends Document {
   sectionId: string;
   sectionName: string;
   content: string;
+  sequence: number;
 }
