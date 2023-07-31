@@ -8,7 +8,7 @@ import { XRawSection } from '@schemas/xrawsection.schema';
 import xRawSectionService from '@services/xrawsection.service';
 
 const getAllXRawSections = (req: Request, res: Response) => {
-
+  const sections = ''
 
   return res.json({success: true});
 }
