@@ -6,6 +6,7 @@ import { parseSite } from './parse';
 import { IXRawSection } from '@models/xrawsection.model';
 import { XRawSection } from '@schemas/xrawsection.schema';
 
+// TODO: Fix this for new schema
 export const createXRawSectionRoute = async (req: Request, res: Response) => {
   if (!req.query.url) {
     return res.status(404).json({success: false, msg: 'Must supply a valid URL!'});
