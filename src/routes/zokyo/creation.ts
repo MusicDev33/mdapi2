@@ -73,6 +73,10 @@ const validateBody = (body: any): CreateChatBody | false => {
     return false;
   }
 
+  if (!body.mode) {
+    return false;
+  }
+
   return { // Implicit string conversions
     user: '' + body.user,
     convId: '' + body.convId,
