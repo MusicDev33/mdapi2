@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
-import { encode } from 'gpt-3-encoder';
 
+import { encode } from 'gpt-3-encoder';
+import { countTokens } from '@anthropic-ai/tokenizer';
 import { OPEN_AI_API_KEY } from '@config/constants';
 
 import chatService from '@services/chat.service';
@@ -11,17 +12,82 @@ import { Chat } from '@schemas/chat.schema';
 import { Conversation } from '@schemas/conversation.schema';
 
 import { generateName } from './naming';
+import { getDate } from './chatutil';
+import { brotliCompress } from 'zlib';
 
 const TOKEN_THRESHOLD = 4096;
 
-export const createNewChatRoute = async (req: Request, res: Response) => {
-  let user = req.body.user;
-  if (!user) {
-    return res.status(400).json({success: false});
+/*
+Chat abstraction handlers. I really only care about supporting both ChatGPT and Claude here, 
+*/
+
+const genChatOpenAi = () => {
+  return false;
+}
+
+const genChatClaude = () => {
+  return false;
+}
+
+const genChat = () => {
+  const chatMap = {
+    'claude': genChatClaude,
+    'chatgpt': genChatOpenAi
   }
 
-  let convId: string = req.body.convId;
+  const generalConfig = {
 
+  }
+
+  const generalHeaders = {
+    'Content-Type': 'application/json',
+  }
+}
+
+/*
+In msg body:
+convId: string
+newMsg: string
+*/
+
+// Return validated vody with types
+type CreateChatBody = {
+  user: string;
+  convId: string;
+  msg: string;
+}
+const validateBody = (body: any): CreateChatBody | false => {
+  if (!body.user) { // user can't be an empty string
+    return false;
+  }
+
+  if (!('convId' in body)) {
+    return false;
+  }
+
+  if (!body.msg) { // We also don't want an empty message
+    return false;
+  }
+
+  if (!body.msg.trim()) { // Seriously. No empty strings, not even ones that only have whitespace.
+    return false;
+  }
+
+  return { // Implicit string conversions
+    user: '' + body.user,
+    convId: '' + body.convId,
+    msg: '' + body.msg,
+  }
+}
+
+export const createNewChatRoute = async (req: Request, res: Response) => {
+  const body = validateBody(req.body);
+  if (!body) {
+    return res.status(400).json({ success: false });
+  }
+
+  let user = body.user;
+  let convId = body.convId;
   let conv = null;
 
   if (convId == '') {
@@ -33,18 +99,19 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
 
     conv = await conversationService.saveModel(newConv);
     if (!conv) {
-      return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
+      return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
     }
-    
+
+    // Implicit conversion to string
     convId = '' + conv.id;
   }
 
   let temperature = 1;
   let top_p = 1;
 
-  const newMsg: string = req.body.msg;
+  const newMsg = body.msg;
 
-  const url ='https://api.openai.com/v1/chat/completions';
+  const url = 'https://api.openai.com/v1/chat/completions';
   const reqConfig = {
     headers: {
       'Content-Type': 'application/json',
@@ -60,9 +127,9 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   }
 
   let messages = [];
-  let allPrevChatsData = await chatService.findModelsByParameter('conversationId', convId, {timestamp: 1});
+  let allPrevChatsData = await chatService.findModelsByParameter('conversationId', convId, { timestamp: 1 });
   if (!allPrevChatsData) {
-    return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
+    return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
   }
 
   let allPrevChats = allPrevChatsData?.map((chat) => {
@@ -75,13 +142,13 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   if (req.body.mode == 'code') {
     temperature = 0.3;
 
-    messages.push({'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.'});
-    messages.push({'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!'});
+    messages.push({ 'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.' });
+    messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!' });
   }
 
-  messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
+  messages.push({ 'role': 'system', 'content': `The date is ${getDate()} in San Francisco.` });
   messages = messages.concat(allPrevChats);
-  messages.push({role: 'user', content: newMsg});
+  messages.push({ role: 'user', content: newMsg });
 
   // Make sure I'm not going over the max token limit.
   while (!tokenCountValid(messages)) {
@@ -93,13 +160,13 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     if (req.body.mode == 'code') {
       temperature = 0.3;
 
-      messages.push({'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.'});
-      messages.push({'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!'});
+      messages.push({ 'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.' });
+      messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!' });
     }
 
-    messages.push({'role': 'system', 'content': `The date is ${getDate()} in San Francisco.`});
+    messages.push({ 'role': 'system', 'content': `The date is ${getDate()} in San Francisco.` });
     messages = messages.concat(allPrevChats);
-    messages.push({role: 'user', content: newMsg});
+    messages.push({ role: 'user', content: newMsg });
   }
 
   const data = {
@@ -141,7 +208,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     return res.status(200).json(responseData);
   } catch (err) {
     console.log(err);
-    return res.status(500).json({success: false, msg: 'Something broke with Zokyo\'s backend'});
+    return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
   }
 };
 
@@ -161,36 +228,32 @@ const tokenCountValid = (messages: any[]) => {
   return true;
 }
 
-// Written by ChatGPT!
-const getDate = (): string => {
-  const date: Date = new Date();
+const tokenCountValidOpenAi = (messages: any[]) => {
+  let total = 0;
 
-  const months: string[] = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const month: string = months[date.getMonth()];
-
-  const suffixes: string[] = ['st', 'nd', 'rd', 'th'];
-  let day: number = date.getDate();
-  let suffix: string;
-  if (day < 4 || day > 20) {
-    suffix = suffixes[day % 10 - 1] || suffixes[3];
-  } else {
-    suffix = suffixes[3];
+  for (let message of messages) {
+    total += encode(message.content).length;
   }
-  const dayString: string = `${day}${suffix}`;
 
-  const year: number = date.getFullYear();
+  console.log(total);
 
-  let hours: number = date.getHours();
-  const ampm: string = hours >= 12 ? 'PM' : 'AM';
-  hours %= 12;
-  hours = hours || 12;
-  const minutes: number = date.getMinutes();
+  if (total > TOKEN_THRESHOLD) {
+    return false;
+  }
 
-  const dateString: string = `${month} ${dayString}, ${year}, ${hours}:${minutes} ${ampm}`;
+  return true;
+}
 
-  const utcString: string = date.toUTCString();
+const tokenCountValidClaude = (messages: any[]) => {
+  let total = 0;
 
-  return `${dateString} (${utcString})`;
-};
+  for (let message of messages) {
+    total += countTokens(message.content);
+  }
 
+  if (total > TOKEN_THRESHOLD) {
+    return false;
+  }
 
+  return true;
+}
