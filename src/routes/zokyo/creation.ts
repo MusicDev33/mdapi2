@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 
-import { encode } from 'gpt-3-encoder';
-import { countTokens } from '@anthropic-ai/tokenizer';
-import { OPEN_AI_API_KEY } from '@config/constants';
+import { OPEN_AI_API_KEY, ANTHROPIC_API_KEY } from '@config/constants';
 
 import chatService from '@services/chat.service';
 import conversationService from '@services/conversation.service';
@@ -13,7 +11,7 @@ import { Conversation } from '@schemas/conversation.schema';
 
 import { generateName } from './naming';
 import { getDate } from './chatutil';
-import { brotliCompress } from 'zlib';
+import { tokenCountDict, ChatEngine } from './engine';
 
 const TOKEN_THRESHOLD = 4096;
 
@@ -21,27 +19,77 @@ const TOKEN_THRESHOLD = 4096;
 Chat abstraction handlers. I really only care about supporting both ChatGPT and Claude here, 
 */
 
-const genChatOpenAi = () => {
-  return false;
+const genChatConfig = (engine: ChatEngine) => {
+  const urlMap: Record<ChatEngine, string> = {
+    'chatgpt': 'https://api.openai.com/v1/chat/completions',
+    'claude': 'https://api.anthropic.com/v1/messages'
+  }
+
+  const headersMap: Record<ChatEngine, Record<string, string>> = {
+    'chatgpt': {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPEN_AI_API_KEY}`
+    },
+    'claude': {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    }
+  }
+
+  const modelMap: Record<ChatEngine, string> = {
+    'chatgpt': 'gpt-3.5-turbo',
+    'claude': 'claude-3-sonnet-20240229'
+  }
+
+  return {
+    url: urlMap[engine],
+    headers: headersMap[engine],
+    model: modelMap[engine]
+  }
 }
 
-const genChatClaude = () => {
-  return false;
+type AgentConfig = {
+  top_p: number;
+  temperature: number;
 }
 
-const genChat = () => {
-  const chatMap = {
+const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig) => {
+  const config = genChatConfig('chatgpt');
+  const data = {
+    messages,
+    top_p: agentConfig.top_p,
+    temperature: agentConfig.temperature,
+    model: config.model
+  }
+
+  const res = await axios.post(config.url, data, { headers: config.headers });
+
+  return res;
+}
+
+const genChatClaude = async (messages: any[], agentConfig: AgentConfig) => {
+  const config = genChatConfig('claude');
+  const data = {
+    messages,
+    top_p: agentConfig.top_p,
+    temperature: agentConfig.temperature,
+    model: config.model
+  }
+
+  const res = await axios.post(config.url, data, { headers: config.headers });
+
+  return res;
+}
+
+const genChat = async (engine: ChatEngine, messages: any[], agentConfig: AgentConfig) => {
+  const chatMap: Record<ChatEngine, Function> = {
     'claude': genChatClaude,
     'chatgpt': genChatOpenAi
   }
 
-  const generalConfig = {
-
-  }
-
-  const generalHeaders = {
-    'Content-Type': 'application/json',
-  }
+  const data = await chatMap[engine](messages, agentConfig);
+  return data;
 }
 
 /*
@@ -55,8 +103,17 @@ type CreateChatBody = {
   user: string;
   convId: string;
   msg: string;
+  mode: string;
+  engine: ChatEngine;
 }
+
+const isChatEngine = (str: string): str is ChatEngine => {
+  return ['claude', 'chatgpt'].includes(str);
+}
+
 const validateBody = (body: any): CreateChatBody | false => {
+  let engine: ChatEngine = 'chatgpt'; // default engine
+
   if (!body.user) { // user can't be an empty string
     return false;
   }
@@ -77,10 +134,16 @@ const validateBody = (body: any): CreateChatBody | false => {
     return false;
   }
 
+  if (body.engine && isChatEngine(body.engine)) {
+    engine = body.engine;
+  }
+
   return { // Implicit string conversions
     user: '' + body.user,
     convId: '' + body.convId,
     msg: '' + body.msg,
+    mode: '' + body.mode,
+    engine
   }
 }
 
@@ -90,14 +153,19 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     return res.status(400).json({ success: false });
   }
 
-  let user = body.user;
+  const user = body.user;
+  const mode = body.mode;
+  const newMsg = body.msg;
+  const engine = body.engine;
   let convId = body.convId;
   let conv = null;
+
+  const tokenCountFunc = tokenCountDict[engine];
 
   if (convId == '') {
     const convName = generateName();
     const newConv = new Conversation({
-      user: user,
+      user,
       name: convName
     });
 
@@ -112,8 +180,6 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
 
   let temperature = 1;
   let top_p = 1;
-
-  const newMsg = body.msg;
 
   const url = 'https://api.openai.com/v1/chat/completions';
   const reqConfig = {
@@ -143,11 +209,11 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     }
   })
 
-  if (req.body.mode == 'code') {
+  if (mode == 'code') {
     temperature = 0.3;
 
     messages.push({ 'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.' });
-    messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!' });
+    messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets, and no other text. Let\'s get started!' });
   }
 
   messages.push({ 'role': 'system', 'content': `The date is ${getDate()} in San Francisco.` });
@@ -155,13 +221,11 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   messages.push({ role: 'user', content: newMsg });
 
   // Make sure I'm not going over the max token limit.
-  while (!tokenCountValid(messages)) {
+  while (!tokenCountFunc(messages, TOKEN_THRESHOLD)) {
     allPrevChats.shift();
-    console.log(allPrevChats);
-
     messages = [];
 
-    if (req.body.mode == 'code') {
+    if (mode == 'code') {
       temperature = 0.3;
 
       messages.push({ 'role': 'user', 'content': 'You are a terse code completion machine. You will answer future questions with just code and nothing more. Do not bother explaining what the code does.' });
@@ -173,16 +237,11 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     messages.push({ role: 'user', content: newMsg });
   }
 
-  const data = {
-    model: 'gpt-3.5-turbo',
-    messages,
-    temperature,
-    top_p
-  }
-
   try {
+    const openAiRes = await genChat('chatgpt', messages, { top_p, temperature });
+
     // TODO: Get rid of this garbage. any should be banned, but it's currently 12:23 AM and I have to wake up early tomorrow
-    const openAiRes = await axios.post(url, data, reqConfig);
+    // const openAiRes = await axios.post(url, data, reqConfig);
     const assistantChat = {
       conversationId: convId,
       role: 'assistant',
@@ -215,49 +274,3 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
   }
 };
-
-const tokenCountValid = (messages: any[]) => {
-  let total = 0;
-
-  for (let message of messages) {
-    total += encode(message.content).length;
-  }
-
-  console.log(total);
-
-  if (total > TOKEN_THRESHOLD) {
-    return false;
-  }
-
-  return true;
-}
-
-const tokenCountValidOpenAi = (messages: any[]) => {
-  let total = 0;
-
-  for (let message of messages) {
-    total += encode(message.content).length;
-  }
-
-  console.log(total);
-
-  if (total > TOKEN_THRESHOLD) {
-    return false;
-  }
-
-  return true;
-}
-
-const tokenCountValidClaude = (messages: any[]) => {
-  let total = 0;
-
-  for (let message of messages) {
-    total += countTokens(message.content);
-  }
-
-  if (total > TOKEN_THRESHOLD) {
-    return false;
-  }
-
-  return true;
-}
