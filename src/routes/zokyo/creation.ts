@@ -54,7 +54,8 @@ type AgentConfig = {
   temperature: number;
 }
 
-const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig) => {
+const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig): Promise<string> => {
+  console.log('Using ChatGPT');
   const config = genChatConfig('chatgpt');
   const data = {
     messages,
@@ -64,26 +65,26 @@ const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig) => {
   }
 
   const res = await axios.post(config.url, data, { headers: config.headers });
-
-  return res;
+  return res.data.choices[0].message.content as string
 }
 
-const genChatClaude = async (messages: any[], agentConfig: AgentConfig) => {
+const genChatClaude = async (messages: any[], agentConfig: AgentConfig): Promise<string> => {
+  console.log('Using Claude');
   const config = genChatConfig('claude');
   const data = {
     messages,
-    top_p: agentConfig.top_p,
     temperature: agentConfig.temperature,
-    model: config.model
+    model: config.model,
+    max_tokens: 1024,
+    system: `The date is ${getDate()} in San Francisco.`
   }
 
   const res = await axios.post(config.url, data, { headers: config.headers });
-
-  return res;
+  return res.data.content[0].text as string;
 }
 
-const genChat = async (engine: ChatEngine, messages: any[], agentConfig: AgentConfig) => {
-  const chatMap: Record<ChatEngine, Function> = {
+const genChat = async (engine: ChatEngine, messages: any[], agentConfig: AgentConfig): Promise<string> => {
+  const chatMap: Record<ChatEngine, (messages: any[], agentConfig: AgentConfig) => Promise<string>> = {
     'claude': genChatClaude,
     'chatgpt': genChatOpenAi
   }
@@ -112,7 +113,7 @@ const isChatEngine = (str: string): str is ChatEngine => {
 }
 
 const validateBody = (body: any): CreateChatBody | false => {
-  let engine: ChatEngine = 'chatgpt'; // default engine
+  let engine: ChatEngine = 'claude'; // default engine
 
   if (!body.user) { // user can't be an empty string
     return false;
@@ -143,7 +144,7 @@ const validateBody = (body: any): CreateChatBody | false => {
     convId: '' + body.convId,
     msg: '' + body.msg,
     mode: '' + body.mode,
-    engine
+    engine: 'claude'
   }
 }
 
@@ -181,14 +182,6 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   let temperature = 1;
   let top_p = 1;
 
-  const url = 'https://api.openai.com/v1/chat/completions';
-  const reqConfig = {
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPEN_AI_API_KEY}`
-    }
-  }
-
   const userChat = {
     conversationId: convId,
     role: 'user',
@@ -216,7 +209,6 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
     messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets, and no other text. Let\'s get started!' });
   }
 
-  messages.push({ 'role': 'system', 'content': `The date is ${getDate()} in San Francisco.` });
   messages = messages.concat(allPrevChats);
   messages.push({ role: 'user', content: newMsg });
 
@@ -232,20 +224,19 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
       messages.push({ 'role': 'assistant', 'content': 'Okay, I will answer your future questions with just code snippets. Let\'s get started!' });
     }
 
-    messages.push({ 'role': 'system', 'content': `The date is ${getDate()} in San Francisco.` });
     messages = messages.concat(allPrevChats);
     messages.push({ role: 'user', content: newMsg });
   }
 
   try {
-    const openAiRes = await genChat('chatgpt', messages, { top_p, temperature });
+    const content = await genChat(engine, messages, { top_p, temperature });
 
     // TODO: Get rid of this garbage. any should be banned, but it's currently 12:23 AM and I have to wake up early tomorrow
     // const openAiRes = await axios.post(url, data, reqConfig);
     const assistantChat = {
       conversationId: convId,
       role: 'assistant',
-      content: openAiRes.data.choices[0].message.content,
+      content,
       timestamp: Date.now()
     }
 

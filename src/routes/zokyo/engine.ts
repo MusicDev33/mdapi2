@@ -41,5 +41,3 @@ export const tokenCountDict: Record<ChatEngine, TokenCountFunc> = {
   'chatgpt': tokenCountValidOpenAi,
   'claude': tokenCountValidClaude
 }
-
-
