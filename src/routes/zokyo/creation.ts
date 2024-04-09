@@ -69,7 +69,6 @@ const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig): Promise
 }
 
 const genChatClaude = async (messages: any[], agentConfig: AgentConfig): Promise<string> => {
-  console.log('Using Claude');
   const config = genChatConfig('claude');
   const data = {
     messages,
@@ -123,11 +122,7 @@ const validateBody = (body: any): CreateChatBody | false => {
     return false;
   }
 
-  if (!body.msg) { // We also don't want an empty message
-    return false;
-  }
-
-  if (!body.msg.trim()) { // Seriously. No empty strings, not even ones that only have whitespace.
+  if (!body.msg || !body.msg.trim()) { // We also don't want an empty message
     return false;
   }
 
@@ -261,6 +256,8 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
 
     return res.status(200).json(responseData);
   } catch (err) {
+    // TODO: More detailed error handling
+    // I would like to give SOME amount of debug info to the client. Like those annoying 529 errors.
     console.log(err);
     return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
   }
