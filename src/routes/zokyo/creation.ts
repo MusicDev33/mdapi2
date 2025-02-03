@@ -39,7 +39,7 @@ const genChatConfig = (engine: ChatEngine) => {
 
   const modelMap: Record<ChatEngine, string> = {
     'chatgpt': 'gpt-3.5-turbo',
-    'claude': 'claude-3-sonnet-20240229'
+    'claude': 'claude-3-5-sonnet-20241022'
   }
 
   return {
@@ -258,6 +258,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   } catch (err) {
     // TODO: More detailed error handling
     // I would like to give SOME amount of debug info to the client. Like those annoying 529 errors.
+    // Also add a proper data property that Zokyo can use
     console.log(err);
     return res.status(500).json({ success: false, msg: 'Something broke with Zokyo\'s backend' });
   }
