@@ -5,4 +5,5 @@ import { Document } from 'mongoose';
 export interface IZUser extends Document {
   username: string;
   password: string;
+  modelPref: string;
 }
