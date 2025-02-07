@@ -114,20 +114,17 @@ const isChatEngine = (str: string): str is ChatEngine => {
 const validateBody = (body: any): CreateChatBody | false => {
   let engine: ChatEngine = 'claude'; // default engine
 
-  if (!body.user) { // user can't be an empty string
-    return false;
-  }
+  let conditions = [
+    !body.user, // user can't be an empty string
+    !body.mode,
+    !('convId' in body),
+    (!body.msg || !body.msg.trim()), // We also don't want an empty message
+  ]
 
-  if (!('convId' in body)) {
-    return false;
-  }
-
-  if (!body.msg || !body.msg.trim()) { // We also don't want an empty message
-    return false;
-  }
-
-  if (!body.mode) {
-    return false;
+  for (let c of conditions) {
+    if (c) {
+      return false;
+    }
   }
 
   if (body.engine && isChatEngine(body.engine)) {
