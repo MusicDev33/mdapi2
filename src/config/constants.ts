@@ -18,6 +18,7 @@ export const RHY_PASS = dotenvCheck(process.env.RHY_PASS);
 export const WHITELIST_CORS = dotenvCheck(process.env.WHITELIST_CORS).split(',');
 export const OPEN_AI_API_KEY = dotenvCheck(process.env.OPEN_AI_API_KEY);
 export const ANTHROPIC_API_KEY = dotenvCheck(process.env.ANTHROPIC_API_KEY);
+export const DEEPSEEK_API_KEY = dotenvCheck(process.env.DEEPSEEK_API_KEY);
 export let WHITELIST_USERS = dotenvCheck(process.env.WHITELIST_USERS).split(',');
 
 export const M_SITE_URL = dotenvCheck(process.env.M_SITE_URL);
@@ -38,6 +39,11 @@ if (OPEN_AI_API_KEY === 'lmao') {
 
 if (ANTHROPIC_API_KEY === 'lmao') {
   console.log('Change Anthropic API key.');
+  process.exit(1);
+}
+
+if (DEEPSEEK_API_KEY === 'lmao') {
+  console.log('Change DeepSeek API key.');
   process.exit(1);
 }
 

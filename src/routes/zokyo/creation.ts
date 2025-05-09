@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Request, Response } from 'express';
 
-import { OPEN_AI_API_KEY, ANTHROPIC_API_KEY } from '@config/constants';
+import { OPEN_AI_API_KEY, ANTHROPIC_API_KEY, DEEPSEEK_API_KEY } from '@config/constants';
 
 import chatService from '@services/chat.service';
 import conversationService from '@services/conversation.service';
@@ -12,17 +12,20 @@ import { Conversation } from '@schemas/conversation.schema';
 import { generateName } from './naming';
 import { getDate } from './chatutil';
 import { tokenCountDict, ChatEngine } from './engine';
+import { genErrorMessage } from './err';
+import { getSystemErrorMap } from 'util';
 
-const TOKEN_THRESHOLD = 4096;
+const TOKEN_THRESHOLD = 4096 * 2;
 
 /*
-Chat abstraction handlers. I really only care about supporting both ChatGPT and Claude here, 
+Chat abstraction handlers. I really only care about supporting both ChatGPT and Claude here
 */
 
 const genChatConfig = (engine: ChatEngine) => {
   const urlMap: Record<ChatEngine, string> = {
     'chatgpt': 'https://api.openai.com/v1/chat/completions',
-    'claude': 'https://api.anthropic.com/v1/messages'
+    'claude': 'https://api.anthropic.com/v1/messages',
+    'deepseek': 'https://api.deepseek.com/v1/chat/completions',
   }
 
   const headersMap: Record<ChatEngine, Record<string, string>> = {
@@ -34,12 +37,19 @@ const genChatConfig = (engine: ChatEngine) => {
       'Content-Type': 'application/json',
       'x-api-key': ANTHROPIC_API_KEY,
       'anthropic-version': '2023-06-01'
-    }
+    },
+    'deepseek': {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+    },
   }
 
+  // TODO: Add model selection
+  // TODO: Add automatic model updates
   const modelMap: Record<ChatEngine, string> = {
-    'chatgpt': 'gpt-3.5-turbo',
-    'claude': 'claude-3-5-sonnet-20241022'
+    'chatgpt': 'gpt-4o',
+    'claude': 'claude-3-7-sonnet-20250219',
+    'deepseek': 'deepseek-chat',
   }
 
   return {
@@ -54,14 +64,18 @@ type AgentConfig = {
   temperature: number;
 }
 
+const getSysPrompt = (): string => {
+  return `The date is ${getDate()} in San Francisco.`;
+}
+
 const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig): Promise<string> => {
-  console.log('Using ChatGPT');
   const config = genChatConfig('chatgpt');
   const data = {
     messages,
     top_p: agentConfig.top_p,
     temperature: agentConfig.temperature,
-    model: config.model
+    model: config.model,
+    system: getSysPrompt()
   }
 
   const res = await axios.post(config.url, data, { headers: config.headers });
@@ -75,7 +89,21 @@ const genChatClaude = async (messages: any[], agentConfig: AgentConfig): Promise
     temperature: agentConfig.temperature,
     model: config.model,
     max_tokens: 1024,
-    system: `The date is ${getDate()} in San Francisco.`
+    system: getSysPrompt()
+  }
+
+  const res = await axios.post(config.url, data, { headers: config.headers });
+  return res.data.content[0].text as string;
+}
+
+const genChatDeepSeek = async (messages: any[], agentConfig: AgentConfig): Promise<string> => {
+  const config = genChatConfig('deepseek');
+  const data = {
+    messages,
+    temperature: agentConfig.temperature,
+    model: config.model,
+    max_tokens: 1024,
+    system: getSysPrompt()
   }
 
   const res = await axios.post(config.url, data, { headers: config.headers });
@@ -83,13 +111,14 @@ const genChatClaude = async (messages: any[], agentConfig: AgentConfig): Promise
 }
 
 const genChat = async (engine: ChatEngine, messages: any[], agentConfig: AgentConfig): Promise<string> => {
-  const chatMap: Record<ChatEngine, (messages: any[], agentConfig: AgentConfig) => Promise<string>> = {
+  const chatFunctions: Record<ChatEngine, (messages: any[], agentConfig: AgentConfig) => Promise<string>> = {
     'claude': genChatClaude,
-    'chatgpt': genChatOpenAi
+    'chatgpt': genChatOpenAi,
+    'deepseek': genChatDeepSeek,
   }
 
-  const data = await chatMap[engine](messages, agentConfig);
-  return data;
+  const chatFunction = chatFunctions[engine];
+  return await chatFunction(messages, agentConfig);
 }
 
 /*
@@ -108,36 +137,38 @@ type CreateChatBody = {
 }
 
 const isChatEngine = (str: string): str is ChatEngine => {
-  return ['claude', 'chatgpt'].includes(str);
+  return ['claude', 'chatgpt', 'deepseek'].includes(str);
 }
 
 const validateBody = (body: any): CreateChatBody | false => {
-  let engine: ChatEngine = 'claude'; // default engine
-
-  let conditions = [
-    !body.user, // user can't be an empty string
-    !body.mode,
-    !('convId' in body),
-    (!body.msg || !body.msg.trim()), // We also don't want an empty message
-  ]
-
-  for (let c of conditions) {
-    if (c) {
-      return false;
-    }
+  if (
+    !body.user ||
+    !body.mode ||
+    !('convId' in body) ||
+    !body.msg?.trim()) {
+    return false;
   }
 
-  if (body.engine && isChatEngine(body.engine)) {
-    engine = body.engine;
-  }
+  const engine: ChatEngine = isChatEngine(body.engine) ? body.engine : 'claude';
 
   return { // Implicit string conversions
     user: '' + body.user,
     convId: '' + body.convId,
     msg: '' + body.msg,
     mode: '' + body.mode,
-    engine: 'claude'
+    engine
   }
+}
+
+// TODO: This should be middleware to be honest, but I have better things to do than write good code in my free time
+const handleSecureEngine = (ip: string, engine: ChatEngine): ChatEngine => {
+  // If IP in some range, turn off DeepSeek for security reasons
+  // Basically check if the IP is from a range where I need more security,
+  // and if so, check if the engine is compatible with those security settings
+
+  console.log(`${new Date().toLocaleString()} - Accessed from ${ip}`);
+
+  return 'claude'
 }
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
@@ -149,7 +180,7 @@ export const createNewChatRoute = async (req: Request, res: Response) => {
   const user = body.user;
   const mode = body.mode;
   const newMsg = body.msg;
-  const engine = body.engine;
+  const engine = handleSecureEngine(req.ip, body.engine);
   let convId = body.convId;
   let conv = null;
 

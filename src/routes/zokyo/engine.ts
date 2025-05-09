@@ -7,7 +7,7 @@ import { countTokens } from '@anthropic-ai/tokenizer';
 
 // Token Counting
 type TokenCountFunc = (messages: any[], threshold: number) => boolean;
-export type ChatEngine = 'chatgpt' | 'claude';
+export type ChatEngine = 'chatgpt' | 'claude' | 'deepseek';
 
 const tokenCountValidOpenAi: TokenCountFunc = (messages: any[], threshold: number) => {
   let total = 0;
@@ -37,7 +37,22 @@ const tokenCountValidClaude: TokenCountFunc = (messages: any[], threshold: numbe
   return true;
 }
 
+const tokenCountValidDeepSeek: TokenCountFunc = (messages: any[], threshold: number) => {
+  let total = 0;
+
+  for (let message of messages) {
+    total += countTokens(message.content);
+  }
+
+  if (total > threshold) {
+    return false;
+  }
+
+  return true;
+}
+
 export const tokenCountDict: Record<ChatEngine, TokenCountFunc> = {
   'chatgpt': tokenCountValidOpenAi,
-  'claude': tokenCountValidClaude
+  'claude': tokenCountValidClaude,
+  'deepseek': tokenCountValidDeepSeek
 }
