@@ -75,7 +75,6 @@ const genChatOpenAi = async (messages: any[], agentConfig: AgentConfig): Promise
     top_p: agentConfig.top_p,
     temperature: agentConfig.temperature,
     model: config.model,
-    system: getSysPrompt()
   }
 
   const res = await axios.post(config.url, data, { headers: config.headers });
@@ -172,10 +171,10 @@ const handleSecureEngine = (ip: string, engine: ChatEngine): ChatEngine => {
   // If IP in some range, turn off DeepSeek for security reasons
   // Basically check if the IP is from a range where I need more security,
   // and if so, check if the engine is compatible with those security settings
-
-  console.log(`${new Date().toLocaleString()} - Accessed from ${ip}`);
-
-  return 'claude'
+  if (engine == 'deepseek') {
+    return 'claude'
+  }
+  return engine;
 }
 
 export const createNewChatRoute = async (req: Request, res: Response) => {
