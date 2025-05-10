@@ -137,7 +137,13 @@ type CreateChatBody = {
 }
 
 const isChatEngine = (str: string): str is ChatEngine => {
-  return ['claude', 'chatgpt', 'deepseek'].includes(str);
+  // Oh, the things we do to keep TypeScript
+  const engines: Record<ChatEngine, true> = {
+    chatgpt: true,
+    claude: true,
+    deepseek: true,
+  }
+  return str in engines;
 }
 
 const validateBody = (body: any): CreateChatBody | false => {
@@ -161,6 +167,7 @@ const validateBody = (body: any): CreateChatBody | false => {
 }
 
 // TODO: This should be middleware to be honest, but I have better things to do than write good code in my free time
+// It turns out it's really hard to track IPs these days.
 const handleSecureEngine = (ip: string, engine: ChatEngine): ChatEngine => {
   // If IP in some range, turn off DeepSeek for security reasons
   // Basically check if the IP is from a range where I need more security,
