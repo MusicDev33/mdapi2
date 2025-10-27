@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json tsconfig.json ./
 RUN npm ci
 COPY . .
-RUN npx tsc
+RUN npm run build
 
 FROM node:18-alpine
 WORKDIR /app

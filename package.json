@@ -12,7 +12,8 @@
     "gen:routes": "ts-node src/routes.generate.ts",
     "dev": "ts-node-dev --respawn src/index.ts",
     "cli": "ts-node src/cli/main.ts",
-    "start": "ts-node src/index.ts"
+    "start": "ts-node src/index.ts",
+    "build": "tsc && tsc-alias"
   },
   "author": "Shelby McCowan",
   "license": "ISC",
@@ -25,6 +26,7 @@
     "@types/node": "^22.10.0",
     "@types/passport": "^1.0.16",
     "@types/ws": "^8.5.13",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.7.2"
   },
   "dependencies": {
