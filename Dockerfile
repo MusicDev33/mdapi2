@@ -1,11 +1,18 @@
-FROM node:16
-WORKDIR ~/app/mdapi2
+# The point of this file is the minimize the ever-loving hell out of the 
+# Docker container size. I'm on a quest to minimize the size of MDAPI,
+# and I think this is as small as it gets for TypeScript.
 
-COPY package*.json ./
-
-RUN npm run setup
-
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json tsconfig.json ./
+RUN npm ci
 COPY . .
+RUN npx tsc
 
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=builder /app/dist ./dist
 EXPOSE 3000
-CMD ["ts-node", "src/index.ts"]
+CMD ["node", "dist/index.js"]
