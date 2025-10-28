@@ -11,7 +11,7 @@ RUN npm run build
 
 FROM node:18-alpine
 WORKDIR /app
-COPY package*.json ./
+COPY package*.json .env ./
 RUN npm ci --omit=dev && npm audit fix && npm cache clean --force
 COPY --from=builder /app/dist ./dist
 EXPOSE 3000
