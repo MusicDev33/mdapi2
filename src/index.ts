@@ -13,13 +13,13 @@ import cors from 'cors';
 dotenv.config();
 require('dotenv-defaults/config');
 
-import { API_BASE } from '@config/constants';
+import { API_BASE, DB_NAME, DB_URI } from '@config/constants';
 import * as RoutesLib from '@config/route-defs';
 import * as limits from '@config/rate-limit';
 import { generalAuth } from '@middleware/auth';
 
 const PORT = process.env.PORT;
-const db = `mongodb://127.0.0.1:27017/${process.env.DB_NAME}`;
+const db = `mongodb://${DB_URI}:27017/${DB_NAME}`;
 
 mongoose.connect(db);
 

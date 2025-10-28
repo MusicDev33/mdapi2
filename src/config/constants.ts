@@ -6,7 +6,7 @@ const updatedDotenvCheck = (property: string): string => {
   if (!prop) {
     throw new Error(`dotenv check failed on property ${property}`);
   }
-  
+
   return prop;
 }
 
@@ -21,6 +21,7 @@ export const OPEN_AI_API_KEY = updatedDotenvCheck('OPEN_AI_API_KEY');
 export const ANTHROPIC_API_KEY = updatedDotenvCheck('ANTHROPIC_API_KEY');
 export const DEEPSEEK_API_KEY = updatedDotenvCheck('DEEPSEEK_API_KEY');
 export let WHITELIST_USERS = updatedDotenvCheck('WHITELIST_USERS').split(',');
+export let DB_URI = updatedDotenvCheck('DB_URI');
 
 export const M_SITE_URL = updatedDotenvCheck('M_SITE_URL');
 export const R_SITE_URL = updatedDotenvCheck('R_SITE_URL')
